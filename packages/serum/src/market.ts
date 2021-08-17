@@ -999,7 +999,8 @@ export class Market {
     const vaultSigner = await PublicKey.createProgramAddress(
       [
         this.address.toBuffer(),
-        this._decoded.vaultSignerNonce.toArrayLike(Buffer, 'le', 8),
+        //todo had to change from 8 bytes to 1
+        this._decoded.vaultSignerNonce.toArrayLike(Buffer, 'le', 1),
       ],
       this._programId,
     );

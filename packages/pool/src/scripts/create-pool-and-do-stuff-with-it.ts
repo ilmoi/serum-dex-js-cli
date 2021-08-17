@@ -1,3 +1,13 @@
+/*
+todo
+  got this one working - need to remember to:
+  1)replace POOL_PROGRAM_ID below
+  2)replace RETBUF_PROGRAM_ID with an instance of https://spl.solana.com/shared-memory
+  3)have the localnet running
+
+  ignore the other file (iljas_try) - just keeping for history.
+ */
+
 import {
   Account,
   Connection,
@@ -14,9 +24,13 @@ import { PoolTransactions } from '../transactions';
 import { getPoolBasket, loadPoolInfo, PoolInfo, UserInfo } from '../index';
 import { getAssociatedTokenAddress } from '@project-serum/associated-token';
 
+// ============================================================================= consts
+
 const POOL_PROGRAM_ID = new PublicKey(
-  'ERvQUuLLY89DcwiUYemUgogdt2TFh7CG7cNW1fEFzeMJ',
+  'Gn6vp3tvRBPntaX4dgtqqegt6S1a8R9vacge5mBQu9dV',
 );
+
+// ============================================================================= do stuff
 
 async function doStuff() {
   const connection = new Connection('http://localhost:8899', 'recent');
@@ -30,8 +44,11 @@ async function doStuff() {
     ),
   );
 
+  //these are user's vaults, not protocol's vaults
   const [mint1, vault1] = await createMint(connection, payer);
   const [mint2, vault2] = await createMint(connection, payer);
+
+  // --------------------------------------- init pool
 
   const [
     poolAddress,
@@ -55,17 +72,14 @@ async function doStuff() {
     ]);
   }
 
+  // --------------------------------------- get pool info
+
   const poolInfo = await loadPoolInfo(connection, poolAddress);
   console.log(poolInfo);
-  const userInfo: UserInfo = {
-    owner: payer.publicKey,
-    poolTokenAccount: await getAssociatedTokenAddress(
-      payer.publicKey,
-      poolInfo.state.poolTokenMint,
-    ),
-    assetAccounts: [vault1, vault2],
-  };
 
+  // --------------------------------------- get
+
+  //{ quantities: [ <BN: 1>, <BN: 1> ] } - min amount of tokens in each account - 1
   console.log(
     await getPoolBasket(
       connection,
@@ -74,6 +88,7 @@ async function doStuff() {
       payer.publicKey,
     ),
   );
+  //{ quantities: [ <BN: 0>, <BN: 0> ] } - except for redemption which rounds down - so 0 each
   console.log(
     await getPoolBasket(
       connection,
@@ -82,6 +97,7 @@ async function doStuff() {
       payer.publicKey,
     ),
   );
+  //{ quantities: [ <BN: 64>, <BN: 12c> ] } - 6 mint decimals means we're actually specifiying 1 pool token, which equates to 100 token A and 300 token B, like the above
   console.log(
     await getPoolBasket(
       connection,
@@ -90,6 +106,7 @@ async function doStuff() {
       payer.publicKey,
     ),
   );
+  //{ quantities: [ <BN: c8>, <BN: 258> ] } - 2 tokens - 200 and 600
   console.log(
     await getPoolBasket(
       connection,
@@ -98,6 +115,7 @@ async function doStuff() {
       payer.publicKey,
     ),
   );
+  // { quantities: [ <BN: c8>, <BN: 258> ] } - exactly same for redemption
   console.log(
     await getPoolBasket(
       connection,
@@ -107,6 +125,18 @@ async function doStuff() {
     ),
   );
 
+  // --------------------------------------- execute
+
+  const userInfo: UserInfo = {
+    owner: payer.publicKey,
+    poolTokenAccount: await getAssociatedTokenAddress(
+      payer.publicKey,
+      poolInfo.state.poolTokenMint,
+    ),
+    assetAccounts: [vault1, vault2],
+  };
+
+  //execute a creation
   {
     const { transaction, signers } = PoolTransactions.execute(
       poolInfo,
@@ -122,6 +152,9 @@ async function doStuff() {
     ]);
   }
 
+  //read back
+  //{ quantities: [ <BN: 64>, <BN: 12c> ] } - 100,300
+  //amounts haven't changed because we haven't subtracted any fees yet - they've only been subtracted from the minted tokens to user
   console.log(
     await getPoolBasket(
       connection,
@@ -131,6 +164,7 @@ async function doStuff() {
     ),
   );
 
+  //exectue a redemption
   {
     const { transaction, signers } = PoolTransactions.execute(
       poolInfo,
@@ -146,6 +180,9 @@ async function doStuff() {
     ]);
   }
 
+  //read back
+  //{ quantities: [ <BN: b6>, <BN: 16c> ] } - 182, 300
+  //token A quantity went down because a part was subtracted for fees
   console.log(
     await getPoolBasket(
       connection,
@@ -155,6 +192,8 @@ async function doStuff() {
     ),
   );
 }
+
+// ============================================================================= helpers
 
 async function createMint(connection: Connection, payer: Account) {
   const mint = new Account();

@@ -25,6 +25,8 @@ import {
   getAssociatedTokenAddress,
 } from '@project-serum/associated-token';
 
+// ============================================================================= interfaces
+
 export interface TransactionAndSigners {
   transaction: Transaction;
   /**
@@ -105,11 +107,11 @@ export class PoolTransactions {
       poolStateSpace,
       poolMintDecimals = 6,
       poolName,
-      assetMints,
+      assetMints, //mint1, mint2
       initialPoolMintSupply = new BN('1' + '0'.repeat(poolMintDecimals)),
       initialAssetQuantities,
       creator,
-      creatorAssets,
+      creatorAssets, //vault1, vault2
       feeRate = 2500,
       additionalAccounts = [],
     } = params;

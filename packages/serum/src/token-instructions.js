@@ -29,13 +29,20 @@ export const WRAPPED_SOL_MINT = new PublicKey(
   'So11111111111111111111111111111111111111112',
 );
 
+//todo had to replace these on the localnet in order to get the function to work
+// instructions:
+// 1) create 2 new mints with this.ownerKp as owner
+// 2) put those mints here and into the Blockchain class
+// 3) create user accounts for both
 export const MSRM_MINT = new PublicKey(
-  'MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L',
+  'E4NjqsYo7SY3xV2CoR62db4VnWfnEUTBetCWA4qSFw1S',
+  // 'MSRMcoVyrFxnSgo5uXwone5SKcGhT1KEJMFEkMEWf9L',
 );
 export const MSRM_DECIMALS = 0;
 
 export const SRM_MINT = new PublicKey(
-  'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt',
+  '8JuQxz4ESxWHqGvyx2x7ppbX9pifLUqUg7Ye3jAPX9ga',
+  // 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt',
 );
 export const SRM_DECIMALS = 6;
 

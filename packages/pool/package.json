@@ -6,9 +6,6 @@
   "main": "dist/lib/index.js",
   "source": "src/index.js",
   "types": "dist/lib/index.d.ts",
-  "exports": {
-    ".": "./dist/lib/index.js"
-  },
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"

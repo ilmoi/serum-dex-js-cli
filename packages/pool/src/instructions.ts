@@ -33,7 +33,8 @@ export interface UserInfo {
 
 export const RETBUF_PROGRAM_ID = new PublicKey(
   // TODO: switch to shmem4EWT2sPdVGvTZCzXXRAURL9G5vpPxNwSeKhHUL once that exists on mainnet
-  'BYVBQ71CYArTNbEpDnsPCjcoWkJL9181xvj52kfyFFHg',
+  // fixme [ilja] this is the shared memory program - https://spl.solana.com/shared-memory
+  'ABqeCGBMLNmEu1trot3i9dbmXbyvu8UQUpQzYF1ZoG4Y',
 );
 
 export const LQD_FEE_OWNER_ADDRESS = new PublicKey(

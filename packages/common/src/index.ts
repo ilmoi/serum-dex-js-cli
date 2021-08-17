@@ -25,6 +25,8 @@ export const SPL_SHARED_MEMORY_ID = new PublicKey(
   'shmem4EWT2sPdVGvTZCzXXRAURL9G5vpPxNwSeKhHUL',
 );
 
+// ============================================================================= mint
+
 export async function createMint(
   provider: Provider,
   authority?: PublicKey,
@@ -122,6 +124,8 @@ export async function createMintAndVault(
   return [mint.publicKey, vault.publicKey];
 }
 
+// ============================================================================= spl token
+
 export async function createTokenAccount(
   provider: Provider,
   mint: PublicKey,
@@ -162,6 +166,8 @@ export async function createTokenAccountInstrs(
   ];
 }
 
+// ============================================================================= sys account
+
 export async function createAccountRentExempt(
   provider: Provider,
   programId: PublicKey,
@@ -183,6 +189,8 @@ export async function createAccountRentExempt(
   await provider.send(tx, [acc]);
   return acc;
 }
+
+// ============================================================================= getters
 
 export async function getMintInfo(
   provider: Provider,

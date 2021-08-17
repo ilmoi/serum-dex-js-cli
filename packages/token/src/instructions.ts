@@ -82,7 +82,8 @@ const instructionMaxSpan = Math.max(
 );
 
 function encodeTokenInstructionData(instruction: TokenInstructionLayout) {
-  const b = Buffer.alloc(instructionMaxSpan);
+  //todo disguisting fucking hack of adding +1000 to solve "RangeError": encoding overruns Buffer
+  const b = Buffer.alloc(instructionMaxSpan + 1000);
   const span = TokenInstructionLayout.encode(instruction, b);
   return b.slice(0, span);
 }

@@ -8,21 +8,22 @@ import {
   Transaction, TransactionInstruction,
 } from '@solana/web3.js';
 import {
-  AccountLayout,
-  MintLayout,
   Token,
   TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
-import { DexInstructions, Market } from '@project-serum/serum';
-import { SRM_MINT } from '@project-serum/serum/lib/token-instructions';
+import { Market } from '@project-serum/serum/lib/market';
+import { DexInstructions } from '@project-serum/serum/lib';
+import {getVaultOwnerAndNonce} from '@project-serum/swap/lib/utils';
+import fs from 'fs';
 
 // ============================================================================= bc class
 
 export class Blockchain {
   connection: Connection;
-  DEX_PROGRAM_ID = new PublicKey('32X9WvCHTtab6QUujy3edG1ogdAWUKrJ3VXApZjNq7dD');
+  DEX_PROGRAM_ID = new PublicKey('HYsk1Qc2NryTaMT8qLRRxuYXqt9fEU7aAZCUa17eHgE9');
 
-  ownerKp: Keypair = Keypair.fromSecretKey(Uint8Array.from([208, 175, 150, 242, 88, 34, 108, 88, 177, 16, 168, 75, 115, 181, 199, 242, 120, 4, 78, 75, 19, 227, 13, 215, 184, 108, 226, 53, 111, 149, 179, 84, 137, 121, 79, 1, 160, 223, 124, 241, 202, 203, 220, 237, 50, 242, 57, 158, 226, 207, 203, 188, 43, 28, 70, 110, 214, 234, 251, 15, 249, 157, 62, 80]));
+  // ownerKp: Keypair = Keypair.fromSecretKey(Uint8Array.from([208, 175, 150, 242, 88, 34, 108, 88, 177, 16, 168, 75, 115, 181, 199, 242, 120, 4, 78, 75, 19, 227, 13, 215, 184, 108, 226, 53, 111, 149, 179, 84, 137, 121, 79, 1, 160, 223, 124, 241, 202, 203, 220, 237, 50, 242, 57, 158, 226, 207, 203, 188, 43, 28, 70, 110, 214, 234, 251, 15, 249, 157, 62, 80]));
+  ownerKp: Keypair;
 
   marketKp = new Keypair();
   reqQKp = new Keypair();
@@ -33,8 +34,8 @@ export class Blockchain {
   //mints
   coinMint: Token;
   pcMint: Token;
-  srmMint: Token;
-  msrmMint: Token;
+  // srmMint: Token;
+  // msrmMint: Token;
 
   //the protocol
   coinVaultPk: PublicKey;
@@ -43,14 +44,14 @@ export class Blockchain {
   //user 1
   coinUserPk: PublicKey;
   pcUserPk: PublicKey;
-  srmUserPk: PublicKey;
+  // srmUserPk: PublicKey;
   msrmUserPk: PublicKey;
 
   //user 2
   coinUser2Pk: PublicKey;
   pcUser2Pk: PublicKey;
-  srmUser2Pk: PublicKey;
-  msrmUser2Pk: PublicKey;
+  // srmUser2Pk: PublicKey;
+  // msrmUser2Pk: PublicKey;
 
   market: Market;
 
@@ -68,9 +69,9 @@ export class Blockchain {
   async initMarket() {
     this.coinMint = await this._createMintAccount();
     this.pcMint = await this._createMintAccount();
-    this.srmMint = new Token(this.connection, new PublicKey('8JuQxz4ESxWHqGvyx2x7ppbX9pifLUqUg7Ye3jAPX9ga'), TOKEN_PROGRAM_ID, this.ownerKp as any);
-    this.msrmMint = new Token(this.connection, new PublicKey('E4NjqsYo7SY3xV2CoR62db4VnWfnEUTBetCWA4qSFw1S'), TOKEN_PROGRAM_ID, this.ownerKp as any);
-    console.log('srm mint is ', this.srmMint.publicKey.toBase58());
+    // this.srmMint = new Token(this.connection, new PublicKey('8JuQxz4ESxWHqGvyx2x7ppbX9pifLUqUg7Ye3jAPX9ga'), TOKEN_PROGRAM_ID, this.ownerKp as any);
+    // this.msrmMint = new Token(this.connection, new PublicKey('E4NjqsYo7SY3xV2CoR62db4VnWfnEUTBetCWA4qSFw1S'), TOKEN_PROGRAM_ID, this.ownerKp as any);
+    // console.log('srm mint is ', this.srmMint.publicKey.toBase58());
 
     //length taken from here - https://github.com/project-serum/serum-dex/blob/master/dex/crank/src/lib.rs#L1286
     //this holds market state, hence need to fit this data structure - https://github.com/project-serum/serum-dex/blob/master/dex/src/state.rs#L176
@@ -89,9 +90,9 @@ export class Blockchain {
     console.log('created necessary accounts');
 
     //create the vault signer PDA
-    //seeds = [market.as_ref(), bytes_of(nonce)]
-    const [vaultSignerPk, vaultSignerNonce] = await PublicKey.findProgramAddress(
-      [this.marketKp.publicKey.toBuffer()],
+
+    const [vaultSignerPk, vaultSignerNonce] = await getVaultOwnerAndNonce(
+      this.marketKp.publicKey,
       this.DEX_PROGRAM_ID,
     );
 
@@ -109,18 +110,18 @@ export class Blockchain {
     // console.log('created vault signer PDA, at ', created_key.toBytes());
 
     //create token accounts
-    this.coinVaultPk = await this._createTokenAccount(this.coinMint, vaultSignerPk);
-    this.pcVaultPk = await this._createTokenAccount(this.pcMint, vaultSignerPk);
+    this.coinVaultPk = await this._createTokenAccount(this.coinMint, vaultSignerPk as any);
+    this.pcVaultPk = await this._createTokenAccount(this.pcMint, vaultSignerPk as any);
 
     this.coinUserPk = await this._createAndFundUserAccount(this.coinMint, 0);
     this.pcUserPk = await this._createAndFundUserAccount(this.pcMint, 5000);
-    this.srmUserPk = await this._createTokenAccount(this.srmMint, this.ownerKp.publicKey);
-    this.msrmUserPk = await this._createTokenAccount(this.msrmMint, this.ownerKp.publicKey);
+    // this.srmUserPk = await this._createTokenAccount(this.srmMint, this.ownerKp.publicKey);
+    // this.msrmUserPk = await this._createTokenAccount(this.msrmMint, this.ownerKp.publicKey);
 
     this.coinUser2Pk = await this._createAndFundUserAccount(this.coinMint, 1000);
     this.pcUser2Pk = await this._createAndFundUserAccount(this.pcMint, 0);
-    this.srmUser2Pk = await this._createTokenAccount(this.srmMint, this.ownerKp.publicKey);
-    this.msrmUser2Pk = await this._createTokenAccount(this.msrmMint, this.ownerKp.publicKey);
+    // this.srmUser2Pk = await this._createTokenAccount(this.srmMint, this.ownerKp.publicKey);
+    // this.msrmUser2Pk = await this._createTokenAccount(this.msrmMint, this.ownerKp.publicKey);
 
     const initMarketIx = DexInstructions.initializeMarket({
         //dex accounts
@@ -139,7 +140,7 @@ export class Blockchain {
         baseLotSize: new BN(1),
         quoteLotSize: new BN(1),
         feeRateBps: new BN(50),
-        vaultSignerNonce: new BN(vaultSignerNonce),
+        vaultSignerNonce: vaultSignerNonce,
         quoteDustThreshold: new BN(100),
         programId: this.DEX_PROGRAM_ID,
         // authority = undefined,
@@ -151,7 +152,7 @@ export class Blockchain {
       [initMarketIx],
       [this.ownerKp],
     );
-    console.log('successfully inited the market');
+    console.log('successfully inited the market at', this.marketKp.publicKey.toBase58());
   }
 
   async loadMarket() {
@@ -335,25 +336,39 @@ export class Blockchain {
   }
 }
 
+export function loadKeypairSync(path: string): Keypair {
+  const secretKey = JSON.parse(fs.readFileSync(path, 'utf8'));
+  return Keypair.fromSecretKey(Uint8Array.from(secretKey));
+}
+
 async function play() {
   const bc = new Blockchain();
+  bc.ownerKp = await loadKeypairSync('/Users/ilmoi/.config/solana/id.json');
+
   await bc.getConnection();
+  const b1 = await bc.connection.getBalance(bc.ownerKp.publicKey);
+  console.log('balance is', b1);
+
   await bc.initMarket();
 
-  await bc.loadMarket();
-  await bc.printMetrics();
+  const b2 = await bc.connection.getBalance(bc.ownerKp.publicKey);
+  console.log('balance is', b2);
+  console.log('initiaing a market costs', (b2-b1)/LAMPORTS_PER_SOL);
 
-  await bc.placeBids();
-  await bc.printMetrics();
-
-  await bc.placeAsks();
-  await bc.printMetrics();
-
-  await bc.consumeEvents();
-  await bc.printMetrics();
-
-  await bc.settleFunds();
-  await bc.printMetrics();
+  // await bc.loadMarket();
+  // await bc.printMetrics();
+  //
+  // await bc.placeBids();
+  // await bc.printMetrics();
+  //
+  // await bc.placeAsks();
+  // await bc.printMetrics();
+  //
+  // await bc.consumeEvents();
+  // await bc.printMetrics();
+  //
+  // await bc.settleFunds();
+  // await bc.printMetrics();
 }
 
 play();

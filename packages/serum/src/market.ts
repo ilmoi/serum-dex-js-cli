@@ -232,6 +232,9 @@ export class Market {
     layoutOverride?: any,
   ) {
     const { owner, data } = throwIfNull(
+      //todo we load the market here - this is why you need connection on the BE
+      // cool so it's impossible to escape talking to Solana
+      // so the backend will have to take its time on this
       await connection.getAccountInfo(address),
       'Market not found',
     );
@@ -562,6 +565,7 @@ export class Market {
     return sortedAccounts;
   }
 
+  //todo this is the only fn using SRM_MINT
   async findBestFeeDiscountKey(
     connection: Connection,
     ownerAddress: PublicKey,
@@ -602,7 +606,9 @@ export class Market {
     cacheDurationMs = 0,
     feeDiscountPubkeyCacheDurationMs = 0,
   ) {
+    // --------------------------------------- prep
     // @ts-ignore
+    //todo I think all that this is doing is trying to assign
     const ownerAddress: PublicKey = owner.publicKey ?? owner;
     const openOrdersAccounts = await this.findOpenOrdersAccountsForOwner(
       connection,
@@ -620,6 +626,7 @@ export class Market {
       feeDiscountPubkey === undefined &&
       this.supportsSrmFeeDiscounts
     ) {
+      //todo this is the only place the SRM_MINT comes into play - so if I avoid triggering this case, I'm good not having to create/repalce it
       useFeeDiscountPubkey = (
         await this.findBestFeeDiscountKey(
           connection,
@@ -702,6 +709,7 @@ export class Market {
       }
     }
 
+    // --------------------------------------- prep the ix
     const placeOrderInstruction = this.makePlaceOrderInstruction(connection, {
       owner,
       payer: wrappedSolAccount?.publicKey ?? payer,
